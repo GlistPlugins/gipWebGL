@@ -8,7 +8,7 @@ set(pluginname gipWeb)
 set(PLUGIN_DIR ${PLUGINS_DIR}/${pluginname})
 set(PLUGIN_LIBS_DIR ${PLUGIN_DIR}/libs)
 
-set(CMAKE_TOOLCHAIN_FILE /opt/homebrew/Cellar/emscripten/3.1.56/libexec/cmake/Modules/Platform/Emscripten.cmake)
+set(CMAKE_TOOLCHAIN_FILE /opt/homebrew/opt/emscripten/libexec/cmake/Modules/Platform/Emscripten.cmake)
 
 ##### PLUGIN HEADERS #####
 list(APPEND PLUGIN_INCLUDES
