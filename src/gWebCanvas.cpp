@@ -15,10 +15,6 @@ gWebCanvas::~gWebCanvas() {
 
 }
 
-void gWebCanvas::deviceOrientationChanged(DeviceOrientation deviceorientation) {
-
-}
-
 void gWebCanvas::touchMoved(int x, int y, int fingerId) {
 
 }

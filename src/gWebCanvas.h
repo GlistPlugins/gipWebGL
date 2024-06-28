@@ -16,8 +16,6 @@ public:
    gWebCanvas(gBaseApp* root);
    virtual ~gWebCanvas();
 
-   virtual void deviceOrientationChanged(DeviceOrientation deviceorientation);
-
    virtual void touchMoved(int x, int y, int fingerId);
    virtual void touchPressed(int x, int y, int fingerId);
    virtual void touchReleased(int x, int y, int fingerId);
