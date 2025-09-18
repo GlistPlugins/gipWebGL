@@ -4,3 +4,6 @@
 [submodule "deps/freetype"]
 	path = deps/freetype
 	url = https://github.com/freetype/freetype.git
+[submodule "deps/emsdk"]
+	path = deps/emsdk
+	url = https://github.com/emscripten-core/emsdk.git

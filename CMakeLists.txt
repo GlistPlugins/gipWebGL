@@ -8,7 +8,7 @@ set(pluginname gipWebGL)
 set(PLUGIN_DIR ${PLUGINS_DIR}/${pluginname})
 set(PLUGIN_LIBS_DIR ${PLUGIN_DIR}/libs)
 
-set(CMAKE_TOOLCHAIN_FILE /opt/homebrew/opt/emscripten/libexec/cmake/Modules/Platform/Emscripten.cmake)
+set(CMAKE_TOOLCHAIN_FILE ${PLUGIN_DIR}/deps/emsdk/emscripten/cmake/Modules/Platform/Emscripten.cmake)
 
 ##### PLUGIN HEADERS #####
 list(APPEND PLUGIN_INCLUDES
@@ -43,3 +43,4 @@ list(APPEND PLUGIN_LINKLIBS
 )
 
 list(APPEND GLIST_SHARED_LINKER_FLAGS "-s FULL_ES=1 -s USE_WEBGL2=1 USE_GLFW=3 USE_FREETYPE=1 USE_SQLITE=1 -s USE_FREETYPE=1 -s USE_LIBPNG=1 -s USE_ZLIB=1 -s USE_SQLITE=1 -s USE_HARFBUZZ=1")
+list(APPEND GLIST_CXX_FLAGS_DEBUG "-Wno-error=nontrivial-memcall")
