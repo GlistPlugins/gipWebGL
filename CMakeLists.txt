@@ -7,9 +7,8 @@ set(pluginname gipWebGL)
 set(PLUGIN_DIR ${PLUGINS_DIR}/${pluginname})
 set(PLUGIN_LIBS_DIR ${PLUGIN_DIR}/libs)
 
-set(CMAKE_TOOLCHAIN_FILE ${PLUGIN_DIR}/deps/emsdk/emscripten/cmake/Modules/Platform/Emscripten.cmake)
+if(EMSCRIPTEN)
 
-##### PLUGIN HEADERS #####
 list(APPEND PLUGIN_INCLUDES
 		${PLUGIN_DIR}/src
 		${PLUGIN_DIR}/include
@@ -19,7 +18,6 @@ list(APPEND PLUGIN_INCLUDES
 list(APPEND SRC_FILES
 )
 
-##### PLUGIN SOURCES #####
 list(APPEND PLUGIN_SRCS
 		${PLUGIN_DIR}/libs/sqlite3.c
 		${PLUGIN_DIR}/src/gWebApp.cpp
@@ -27,10 +25,7 @@ list(APPEND PLUGIN_SRCS
 		${ENGINE_DIR}/core/gGLFWWindow.cpp
 )
 
-set(ASSIMP_BUILD_TESTS OFF)
-set(ASSIMP_WARNINGS_AS_ERRORS OFF)
 add_subdirectory(${PLUGIN_DIR}/deps/assimp ${CMAKE_BINARY_DIR}/assimp EXCLUDE_FROM_ALL)
-set(FT_DISABLE_HARFBUZZ ON)
 add_subdirectory(${PLUGIN_DIR}/deps/freetype ${CMAKE_BINARY_DIR}/freetype EXCLUDE_FROM_ALL)
 
 
@@ -41,5 +36,12 @@ list(APPEND PLUGIN_LINKLIBS
 		glfw
 )
 
-list(APPEND GLIST_SHARED_LINKER_FLAGS "-s FULL_ES=1 -s USE_WEBGL2=1 USE_GLFW=3 USE_FREETYPE=1 USE_SQLITE=1 -s USE_FREETYPE=1 -s USE_LIBPNG=1 -s USE_ZLIB=1 -s USE_SQLITE=1 -s USE_HARFBUZZ=1")
-list(APPEND GLIST_CXX_FLAGS_DEBUG "-Wno-error=nontrivial-memcall")
+if(CMAKE_HOST_SYSTEM_NAME STREQUAL "Linux")
+	set(SHADERTOHEADER_EXEC_PATH "${PLUGIN_DIR}/tools/GlistShaderToHeader-linux-x86_64")
+elseif(CMAKE_HOST_SYSTEM_NAME STREQUAL "Darwin")
+	set(SHADERTOHEADER_EXEC_PATH "${PLUGIN_DIR}/tools/GlistShaderToHeader-macos-universal")
+elseif(CMAKE_HOST_SYSTEM_NAME STREQUAL "Windows")
+	set(SHADERTOHEADER_EXEC_PATH "${PLUGIN_DIR}/tools/GlistShaderToHeader-win-x86_64.exe")
+endif()
+
+endif()
