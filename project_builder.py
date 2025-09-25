@@ -76,17 +76,13 @@ def setup_emscripten_cmake_flags(project_path, build_dir):
     if assets_dir.exists() and any(assets_dir.iterdir()):
         # Use Emscripten's --preload-file to pack assets
         flags.extend([
-            f"-DCMAKE_EXE_LINKER_FLAGS=--preload-file {assets_dir}@/assets",
-            "-DCMAKE_EXECUTABLE_SUFFIX=.html"  # Generate HTML file
+            f"-DCMAKE_EXE_LINKER_FLAGS=--preload-file {assets_dir}@/assets"
         ])
         print("Assets found - will be packed with --preload-file")
-    else:
-        # No assets, just generate HTML
-        flags.append("-DCMAKE_EXECUTABLE_SUFFIX=.html")
 
     # Add common Emscripten web optimization flags
     common_flags = [
-        # Export common functions
+        "-DCMAKE_EXECUTABLE_SUFFIX=\".html\"",
         "-DCMAKE_EXE_LINKER_FLAGS_RELEASE=-s EXPORTED_FUNCTIONS=['_main','_malloc','_free'] -s EXPORTED_RUNTIME_METHODS=['ccall','cwrap']"
     ]
 
