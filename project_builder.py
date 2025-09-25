@@ -82,7 +82,7 @@ def setup_emscripten_cmake_flags(project_path, build_dir):
 
     # Add common Emscripten web optimization flags
     common_flags = [
-        "-DCMAKE_EXECUTABLE_SUFFIX=\".html\"",
+        "-DCMAKE_EXECUTABLE_SUFFIX='.html'",
         "-DCMAKE_EXE_LINKER_FLAGS_RELEASE=-s EXPORTED_FUNCTIONS=['_main','_malloc','_free'] -s EXPORTED_RUNTIME_METHODS=['ccall','cwrap']"
     ]
 
