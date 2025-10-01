@@ -66,7 +66,6 @@ def find_cmake_executable():
     print("ERROR: Could not find cmake executable")
     return None
 
-
 def setup_emscripten_cmake_flags(project_path, build_dir):
     """Setup Emscripten-specific CMake flags for asset loading and web output."""
     flags = []
@@ -80,6 +79,98 @@ def setup_emscripten_cmake_flags(project_path, build_dir):
         ])
         print("Assets found - will be packed with --preload-file")
 
+    # Ask about threading support
+    threading_enabled = input("\nEnable Emscripten threading support? (y/N): ").lower().strip()
+
+    if threading_enabled in ['y', 'yes', '1', 'true']:
+        print("\nThreading enabled!")
+        flags.append("-DEMSCRIPTEN_ENABLE_THREADING=ON")
+
+        # Ask for memory size
+        print("\nMemory presets:")
+        print("  1. Small  - 512MB  (basic apps)")
+        print("  2. Medium - 1GB    (recommended)")
+        print("  3. Large  - 2GB    (complex apps)")
+        print("  4. XLarge - 4GB    (heavy AI/ML)")
+        print("  5. Custom - specify your own")
+
+        memory_choice = input("\nSelect memory preset (1-5) [2]: ").strip()
+
+        memory_presets = {
+            '1': '512',
+            '2': '1024',
+            '3': '2048',
+            '4': '4096'
+        }
+
+        if memory_choice in memory_presets:
+            memory_mb = memory_presets[memory_choice]
+            print(f"Selected: {memory_mb}MB")
+        elif memory_choice == '5':
+            while True:
+                try:
+                    memory_mb = input("Enter memory size in MB: ").strip()
+                    # Validate it's a reasonable number
+                    mem_val = int(memory_mb)
+                    if mem_val < 64:
+                        print("Warning: Memory size too small, minimum 64MB")
+                        continue
+                    elif mem_val > 4096:
+                        confirm = input(f"Warning: {mem_val}MB is very large. Continue? (y/N): ")
+                        if confirm.lower() not in ['y', 'yes']:
+                            continue
+                    break
+                except ValueError:
+                    print("Please enter a valid number")
+        else:
+            memory_mb = '1024'  # Default to medium
+            print("Using default: 1024MB")
+
+        flags.append(f"-DEMSCRIPTEN_MAXIMUM_MEMORY_MB={memory_mb}")
+
+        # Ask for thread pool size
+        while True:
+            try:
+                thread_size = input(f"\nThread pool size (1-16) [4]: ").strip()
+                if not thread_size:
+                    thread_size = '4'
+                    break
+
+                thread_val = int(thread_size)
+                if 1 <= thread_val <= 16:
+                    break
+                else:
+                    print("Thread pool size must be between 1 and 16")
+            except ValueError:
+                print("Please enter a valid number")
+
+        flags.append(f"-DEMSCRIPTEN_THREAD_POOL_SIZE={thread_size}")
+
+        print(f"\nThreading configured:")
+        print(f"   Memory: {memory_mb}MB (fixed)")
+        print(f"   Threads: {thread_size}")
+
+    else:
+        print("\nThreading disabled")
+        flags.append("-DEMSCRIPTEN_ENABLE_THREADING=OFF")
+
+        # Ask for initial memory for non-threading builds
+        memory_choice = input("\nInitial memory size in MB [256]: ").strip()
+        if not memory_choice:
+            memory_choice = '256'
+
+        try:
+            mem_val = int(memory_choice)
+            if mem_val < 64:
+                print("Warning: Using minimum 64MB")
+                memory_choice = '64'
+        except ValueError:
+            print("Invalid input, using default 256MB")
+            memory_choice = '256'
+
+        flags.append(f"-DEMSCRIPTEN_INITIAL_MEMORY_MB={memory_choice}")
+        print(f"Memory: {memory_choice}MB (growable)")
+
     # Add common Emscripten web optimization flags
     common_flags = [
         "-DCMAKE_EXECUTABLE_SUFFIX='.html'",
@@ -87,6 +178,8 @@ def setup_emscripten_cmake_flags(project_path, build_dir):
     ]
 
     flags.extend(common_flags)
+
+    print(f"\nFinal CMake flags: {len(flags)} flags configured")
     return flags
 
 
@@ -295,45 +388,6 @@ The .js file handles WebAssembly loading and browser integration.
         print(f"ERROR: Failed to create zip package: {e}")
         return False
 
-def create_asset_pack(project_path, build_dir):
-    """Create an asset pack file containing all assets."""
-    assets_dir = project_path / "assets"
-    if not assets_dir.exists():
-        print("No assets directory found, skipping asset pack creation")
-        return None
-    
-    asset_pack = {}
-    asset_pack_path = build_dir / "assets.pak"
-    
-    try:
-        # Collect all asset files
-        for asset_file in assets_dir.rglob('*'):
-            if asset_file.is_file():
-                relative_path = asset_file.relative_to(assets_dir)
-                
-                # Read file as binary
-                with open(asset_file, 'rb') as f:
-                    file_data = f.read()
-                
-                # Store as base64 for JSON serialization
-                import base64
-                asset_pack[str(relative_path)] = {
-                    'data': base64.b64encode(file_data).decode('utf-8'),
-                    'size': len(file_data),
-                    'type': asset_file.suffix.lower()
-                }
-        
-        # Write asset pack file
-        with open(asset_pack_path, 'w') as f:
-            json.dump(asset_pack, f, separators=(',', ':'))
-        
-        print(f"Asset pack created: {asset_pack_path} ({len(asset_pack)} files)")
-        return asset_pack_path
-        
-    except Exception as e:
-        print(f"ERROR: Failed to create asset pack: {e}")
-        return None
-
 def check_folder_structure():
     """Check if the current directory structure is correct."""
     current_dir = Path.cwd()
@@ -414,6 +468,8 @@ def check_and_install_emsdk():
         emsdk_path = "./emsdk/emsdk"
         if os.name == 'nt':  # Windows
             emsdk_path += ".bat"
+
+        emsdk_path = Path(emsdk_path).absolute()
         
         subprocess.run([emsdk_path, "install", "latest"], check=True)
         subprocess.run([emsdk_path, "activate", "latest"], check=True)
@@ -819,7 +875,7 @@ def setup_emscripten_env():
 
 def main():
     """Main function."""
-    print("GList WebGL Project Builder")
+    print("GlistEngine WebGL Project Builder")
     print("=" * 40)
     
     # Check folder structure
