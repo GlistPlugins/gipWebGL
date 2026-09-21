@@ -9,10 +9,35 @@ set(PLUGIN_LIBS_DIR ${PLUGIN_DIR}/libs)
 
 if(EMSCRIPTEN)
 
+##### DEPENDENCIES #####
+# Fetched at configure time, see external/ for the pinned versions.
+#
+# Everything ends up in one wasm module, so the dependencies are built static.
+# assimp would otherwise turn BUILD_SHARED_LIBS on for the whole build and leave
+# the engine linking against a libassimp.so that the app cannot resolve.
+#
+# They are linked into the engine, which is a shared module, so they have to be
+# position independent as well.
+set(BUILD_SHARED_LIBS OFF CACHE BOOL "" FORCE)
+set(CMAKE_POSITION_INDEPENDENT_CODE ON)
+include(${PLUGIN_DIR}/external/assimp.cmake)
+include(${PLUGIN_DIR}/external/freetype.cmake)
+
+##### ENGINE DEFINES #####
+# Emscripten only defines __EMSCRIPTEN__ these days, the engine sources still
+# test the unprefixed name. Set after the dependencies so it stays off their
+# builds.
+add_compile_definitions(EMSCRIPTEN)
+
+##### THREADS #####
+# The engine links with -pthread, which asks wasm-ld for shared memory. Nothing
+# is compiled with it and the web build is single threaded, so drop it.
+list(REMOVE_ITEM GLIST_SHARED_LINKER_FLAGS -pthread)
+
 list(APPEND PLUGIN_INCLUDES
 		${PLUGIN_DIR}/src
 		${PLUGIN_DIR}/include
-		${PLUGIN_DIR}/deps/freetype/include
+		${freetype_SOURCE_DIR}/include
 )
 
 list(APPEND SRC_FILES
@@ -24,10 +49,6 @@ list(APPEND PLUGIN_SRCS
 		${PLUGIN_DIR}/src/gWebCanvas.cpp
 		${ENGINE_DIR}/core/gGLFWWindow.cpp
 )
-
-add_subdirectory(${PLUGIN_DIR}/deps/assimp ${CMAKE_BINARY_DIR}/assimp EXCLUDE_FROM_ALL)
-add_subdirectory(${PLUGIN_DIR}/deps/freetype ${CMAKE_BINARY_DIR}/freetype EXCLUDE_FROM_ALL)
-
 
 list(APPEND PLUGIN_LINKLIBS
 		assimp
